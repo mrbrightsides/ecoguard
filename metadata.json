@@ -1,0 +1,9 @@
+{
+  "name": "EcoGuard AI",
+  "description": "A powerful environmental tool for the Hack for Humanity hackathon. It uses Gemini AI to analyze ecological issues from photos and suggests local action plans using Google Maps and Search grounding.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation",
+    "microphone"
+  ]
+}
