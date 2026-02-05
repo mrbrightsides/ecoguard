@@ -33,7 +33,7 @@ const cleanObjectStrings = (obj: any): any => {
 };
 
 /**
- * Analyzes an image or video to detect environmental issues
+ * Analyzes an image or video to detect environmental issues with deep reasoning
  */
 export async function analyzeEnvironmentMedia(
   base64Data: string, 
@@ -43,11 +43,11 @@ export async function analyzeEnvironmentMedia(
   
   const isVideo = mimeType.startsWith('video/');
   const promptText = isVideo 
-    ? "Analyze this video for environmental concerns. Observe the entire clip. Identify the primary issue, its severity, and calculate an 'Impact Score' from 0 to 100 based on ecological damage shown. Provide a structured action plan. Return the response in strict JSON format. DO NOT use markdown formatting like asterisks in your text descriptions."
-    : "Analyze this image for environmental concerns. Identify the primary issue, its severity, and calculate an 'Impact Score' from 0 to 100 based on ecological damage. Provide a structured action plan. Return the response in strict JSON format. DO NOT use markdown formatting like asterisks in your text descriptions.";
+    ? "Analyze this video for environmental concerns. Provide deep reasoning for your impact score. Observe the entire clip. Identify the primary issue, its severity, and calculate an 'Impact Score' from 0 to 100 based on ecological damage shown. Provide a structured action plan. Return the response in strict JSON format. DO NOT use markdown formatting like asterisks in your text descriptions."
+    : "Analyze this image for environmental concerns. Provide deep reasoning for your impact score. Identify the primary issue, its severity, and calculate an 'Impact Score' from 0 to 100 based on ecological damage. Provide a structured action plan. Return the response in strict JSON format. DO NOT use markdown formatting like asterisks in your text descriptions.";
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-3-pro-preview', // Upgraded to Pro for deeper analysis
     contents: {
       parts: [
         { inlineData: { mimeType: mimeType, data: base64Data } },
@@ -55,6 +55,7 @@ export async function analyzeEnvironmentMedia(
       ]
     },
     config: {
+      thinkingConfig: { thinkingBudget: 4000 }, // Added thinking budget for complex ecological reasoning
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
