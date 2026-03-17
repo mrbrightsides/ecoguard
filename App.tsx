@@ -17,6 +17,8 @@ import {
   Radio, Map as MapAlt, Lock, Unlock
 } from 'lucide-react';
 import { GoogleGenAI, Modality, LiveServerMessage } from "@google/genai";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { 
   analyzeEnvironmentMedia, 
   findLocalEcoResources, 
@@ -90,6 +92,52 @@ function createBlob(data: Float32Array): { data: string; mimeType: string } {
     mimeType: 'audio/pcm;rate=16000',
   };
 }
+
+const MapViewUpdater = ({ center }: { center: [number, number] }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center);
+  }, [center, map]);
+  return null;
+};
+
+const MapMarker: React.FC<{ node: SectorTask, location: LocationData, onSelect: (node: SectorTask) => void }> = ({ node, location, onSelect }) => {
+  const position: [number, number] = [location.latitude + node.latOffset, location.longitude + node.lngOffset];
+  
+  const icon = L.divIcon({
+    className: 'custom-div-icon',
+    html: `<div class="w-8 h-8 rounded-lg border-2 flex items-center justify-center shadow-2xl ${
+      node.type === 'pollution' ? 'bg-red-500/20 border-red-500 text-red-500' :
+      node.type === 'restoration' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' :
+      'bg-blue-500/20 border-blue-500 text-blue-500'
+    }">
+      ${node.type === 'pollution' ? '⚠️' : node.type === 'restoration' ? '🌲' : 'ℹ️'}
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+
+  return (
+    <Marker position={position} icon={icon} eventHandlers={{ click: () => onSelect(node) }}>
+      <Popup className="custom-popup">
+        <div className="p-2 min-w-[150px]">
+          <div className="flex items-center justify-between mb-2">
+            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-sm ${
+              node.priority === 'high' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
+            }`}>{node.type}</span>
+          </div>
+          <h4 className="text-xs font-black text-slate-900 mb-1">{node.title}</h4>
+          <p className="text-[10px] text-slate-600 leading-tight mb-2">{node.description}</p>
+          {node.uri && (
+            <a href={node.uri} target="_blank" className="text-[8px] font-black text-emerald-600 uppercase tracking-widest hover:underline">
+              Access Intel
+            </a>
+          )}
+        </div>
+      </Popup>
+    </Marker>
+  );
+};
 
 const App: React.FC = () => {
   // Navigation
@@ -246,33 +294,76 @@ const App: React.FC = () => {
     
     setIsScanningSector(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const resources = await findLocalEcoResources(location, "environmental organizations and recycling centers");
+      // Simulate a sophisticated planetary scan
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Use Gemini to find real local resources
+      const resources = await findLocalEcoResources(location, "environmental organizations, recycling centers, and nature reserves");
       
       const groundedNodes: SectorTask[] = resources.links.map((link, i) => ({
         id: `grounded-${i}`,
         title: link.title,
         type: 'intelligence',
         uri: link.uri,
-        latOffset: (Math.random() - 0.5) * 0.02,
-        lngOffset: (Math.random() - 0.5) * 0.02,
-        description: "Verified Regional Resource Node identified via planetary intelligence uplink.",
+        latOffset: (Math.random() - 0.5) * 0.03,
+        lngOffset: (Math.random() - 0.5) * 0.03,
+        description: "Verified Regional Resource Node identified via planetary intelligence uplink. Strategic asset for environmental coordination.",
         priority: 'low',
         status: 'completed'
       }));
 
+      // Generate more diverse mock reports based on the location
       const mockReports: SectorTask[] = [
-        { id: 'report-1', title: "Unauthorized Dumping Site", type: 'pollution', latOffset: 0.005, lngOffset: -0.008, description: "Alert: Hazardous waste detected in woodland sector. Immediate containment required.", priority: 'high', status: 'pending' },
-        { id: 'report-2', title: "Reforestation Project", type: 'restoration', latOffset: -0.003, lngOffset: 0.012, description: "Community-led green canopy expansion. Volunteers needed for irrigation.", priority: 'medium', status: 'in-progress' },
-        { id: 'report-3', title: "Water Quality Warning", type: 'pollution', latOffset: 0.01, lngOffset: 0.005, description: "Runoff detected in regional tributary. Aquatic habitat at risk.", priority: 'high', status: 'pending' }
+        { 
+          id: 'report-1', 
+          title: "Unauthorized Waste Accumulation", 
+          type: 'pollution', 
+          latOffset: 0.008, 
+          lngOffset: -0.012, 
+          description: "Tactical Alert: High-density waste signature detected. Potential soil contamination risk. Immediate field verification recommended.", 
+          priority: 'high', 
+          status: 'pending' 
+        },
+        { 
+          id: 'report-2', 
+          title: "Urban Canopy Restoration", 
+          type: 'restoration', 
+          latOffset: -0.005, 
+          lngOffset: 0.015, 
+          description: "Active Restoration Zone: Native species integration in progress. Monitoring carbon sequestration potential.", 
+          priority: 'medium', 
+          status: 'in-progress' 
+        },
+        { 
+          id: 'report-3', 
+          title: "Hydrological Anomaly", 
+          type: 'pollution', 
+          latOffset: 0.015, 
+          lngOffset: 0.008, 
+          description: "Warning: Abnormal turbidity detected in local waterway. Source tracking initiated. Biodiversity impact assessment pending.", 
+          priority: 'high', 
+          status: 'pending' 
+        },
+        { 
+          id: 'report-4', 
+          title: "Biodiversity Hotspot", 
+          type: 'restoration', 
+          latOffset: 0.012, 
+          lngOffset: -0.018, 
+          description: "Intelligence: Rare avian species nesting site. Restricted access zone for habitat preservation.", 
+          priority: 'low', 
+          status: 'completed' 
+        }
       ];
 
       setLocalNodes([...groundedNodes, ...mockReports]);
       setSectorInitialized(true);
+      setVoiceNotification("SECTOR GRID INITIALIZED");
     } catch (e) {
-      setError("Sector initialization sequence failed.");
+      setError("Sector initialization sequence failed. Planetary uplink unstable.");
     } finally {
       setIsScanningSector(false);
+      setTimeout(() => setVoiceNotification(null), 3000);
     }
   };
 
@@ -543,8 +634,8 @@ const App: React.FC = () => {
             scriptProcessor.connect(inputCtx.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
-            if (message.serverContent?.inputAudioTranscription) {
-              const text = message.serverContent.inputAudioTranscription.text;
+            if (message.serverContent?.inputTranscription) {
+              const text = message.serverContent.inputTranscription.text;
               currentTranscriptionRef.current.user += text;
               setTranscriptions(prev => {
                 const last = prev[prev.length - 1];
@@ -995,101 +1086,71 @@ const App: React.FC = () => {
             </div>
 
             <div className="relative h-[60vh] sm:h-[650px] bg-slate-900 rounded-[2rem] sm:rounded-[4rem] border border-white/10 overflow-hidden shadow-2xl group w-full">
-               {/* RADAR LAYER */}
-               {gridLayer === 'radar' && (
-                 <>
-                   <div className="absolute inset-0 opacity-15 pointer-events-none">
-                      <div className="grid grid-cols-8 sm:grid-cols-12 h-full w-full">
-                        {Array.from({ length: 96 }).map((_, i) => (<div key={i} className="border-[0.5px] border-emerald-500/10 h-full w-full"></div>))}
-                      </div>
+               {!sectorInitialized ? (
+                 <div className="h-full w-full flex flex-col items-center justify-center gap-6 sm:gap-8 text-center px-4">
+                   <div className="w-24 h-24 sm:w-32 sm:h-32 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center animate-pulse-soft">
+                      <Radar size={32} className="text-emerald-500 sm:w-12 sm:h-12" />
                    </div>
-                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_0deg,transparent_0deg,rgba(16,185,129,0.03)_45deg,rgba(16,185,129,0.08)_90deg,transparent_90deg)] rounded-full animate-radar-sweep pointer-events-none"></div>
-                 </>
-               )}
-
-               {/* HEATMAP LAYER */}
-               {gridLayer === 'heat' && (
-                 <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute inset-0 bg-red-950/10"></div>
-                    {localNodes.map(node => (
-                      <div 
-                        key={`heat-${node.id}`} 
-                        className={`absolute w-64 h-64 sm:w-96 sm:h-96 blur-[80px] sm:blur-[120px] rounded-full mix-blend-screen opacity-40 animate-pulse-soft transition-all duration-1000 ${node.type === 'pollution' ? 'bg-red-500' : node.type === 'restoration' ? 'bg-emerald-500' : 'bg-blue-500'}`}
-                        style={{ top: `calc(50% + ${node.latOffset * 2000}% - 128px)`, left: `calc(50% + ${node.lngOffset * 2000}% - 128px)` }}
-                      />
-                    ))}
-                 </div>
-               )}
-
-               {/* TOPO LAYER */}
-               {gridLayer === 'topo' && (
-                 <div className="absolute inset-0 topo-grid topo-line opacity-20 pointer-events-none"></div>
-               )}
-
-               {/* Common Elements */}
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-                 <div className="w-8 h-8 sm:w-12 sm:h-12 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center animate-pulse">
-                    <div className="w-2 h-2 sm:w-4 sm:h-4 bg-emerald-500 rounded-full border border-white shadow-xl"></div>
-                 </div>
-               </div>
-
-               {/* Node Visualization */}
-               <div className="absolute inset-0 p-6 sm:p-10 w-full h-full overflow-hidden">
-                 {!sectorInitialized ? (
-                   <div className="h-full w-full flex flex-col items-center justify-center gap-6 sm:gap-8 text-center px-4">
-                     <div className="w-24 h-24 sm:w-32 sm:h-32 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center animate-pulse-soft">
-                        <Radar size={32} className="text-emerald-500 sm:w-12 sm:h-12" />
-                     </div>
-                     <div className="space-y-3 sm:space-y-4">
-                        <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight">Sector Offline</h3>
-                        <p className="text-slate-500 text-[11px] sm:text-sm max-w-xs mx-auto">Initialize sweep to sync with planetary intelligence data hubs.</p>
-                        <button onClick={initializeSector} disabled={isScanningSector} className="px-8 py-4 bg-emerald-500 text-white rounded-full font-black text-xs sm:text-sm shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto mt-4 sm:mt-6">
-                            {isScanningSector ? <Loader2 className="animate-spin w-4 h-4" /> : <Radar size={18} />} {isScanningSector ? 'SYNCING...' : 'INITIALIZE SWEEP'}
-                        </button>
-                     </div>
+                   <div className="space-y-3 sm:space-y-4">
+                      <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight">Sector Offline</h3>
+                      <p className="text-slate-500 text-[11px] sm:text-sm max-w-xs mx-auto">Initialize sweep to sync with planetary intelligence data hubs.</p>
+                      <button onClick={initializeSector} disabled={isScanningSector} className="px-8 py-4 bg-emerald-500 text-white rounded-full font-black text-xs sm:text-sm shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto mt-4 sm:mt-6">
+                          {isScanningSector ? <Loader2 className="animate-spin w-4 h-4" /> : <Radar size={18} />} {isScanningSector ? 'SYNCING...' : 'INITIALIZE SWEEP'}
+                      </button>
                    </div>
-                 ) : (
-                   <div className="relative w-full h-full overflow-hidden">
-                     {localNodes.map(node => (
-                       <div 
-                         key={node.id} 
-                         className="absolute animate-in fade-in zoom-in-50 duration-500"
-                         style={{ top: `calc(50% + ${node.latOffset * 2500}%)`, left: `calc(50% + ${node.lngOffset * 2500}%)` }}
-                       >
+                 </div>
+               ) : (
+                 <div className="h-full w-full">
+                   {location && (
+                     <MapContainer 
+                       center={[location.latitude, location.longitude]} 
+                       zoom={13} 
+                       style={{ height: '100%', width: '100%' }}
+                       zoomControl={false}
+                     >
+                       <TileLayer
+                         url={
+                           gridLayer === 'radar' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" :
+                           gridLayer === 'heat' ? "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png" :
+                           "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+                         }
+                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                       />
+                       <MapViewUpdater center={[location.latitude, location.longitude]} />
+                       <div className="absolute top-4 right-4 z-[1000]">
                          <button 
-                            onClick={() => setSelectedNode(node)}
-                            className={`group/marker relative -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-all ${selectedNode?.id === node.id ? 'scale-110 sm:scale-125 z-50' : 'hover:scale-110'}`}
+                           onClick={() => setLocation({ ...location })} 
+                           className="p-3 bg-white/90 backdrop-blur-md border border-black/10 rounded-xl shadow-xl hover:bg-white transition-all text-slate-900"
                          >
-                            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl border-2 shadow-2xl flex items-center justify-center transition-all ${
-                              node.type === 'pollution' ? 'bg-red-500/20 border-red-500 text-red-500' :
-                              node.type === 'restoration' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' :
-                              'bg-blue-500/20 border-blue-500 text-blue-500'
-                            }`}>
-                               {node.type === 'pollution' ? <AlertTriangle size={12}/> : 
-                                node.type === 'restoration' ? <TreePine size={12}/> : <Info size={12}/>}
-                            </div>
-                            
-                            {(selectedNode?.id === node.id) && (
-                              <div className="absolute bottom-full mb-3 w-48 sm:w-56 bg-slate-900/95 backdrop-blur-xl border border-white/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom-2 pointer-events-auto">
-                                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                                    <span className={`text-[7px] sm:text-[8px] font-black uppercase px-1.5 py-0.5 rounded-sm ${getImpactBg(node.priority === 'high' ? 80 : 40)}`}>{node.type}</span>
-                                    <button onClick={(e) => { e.stopPropagation(); setSelectedNode(null); }} className="text-slate-500 p-1"><X size={10}/></button>
-                                </div>
-                                <h4 className="text-[10px] sm:text-xs font-black text-white mb-1.5 sm:mb-2">{node.title}</h4>
-                                <p className="text-[9px] sm:text-[10px] text-slate-400 leading-relaxed mb-3 sm:mb-4 line-clamp-3">{node.description}</p>
-                                {node.uri && (
-                                  <a href={node.uri} target="_blank" className="flex items-center gap-1.5 text-[7px] sm:text-[8px] font-black text-emerald-400 uppercase tracking-widest hover:text-white transition-colors">
-                                    Access Intel <ExternalLink size={10}/>
-                                  </a>
-                                )}
-                              </div>
-                            )}
+                           <Locate size={18} />
                          </button>
                        </div>
-                     ))}
-                   </div>
-                 )}
-               </div>
+                       
+                       {/* User Location Marker */}
+                       <Marker 
+                         position={[location.latitude, location.longitude]} 
+                         icon={L.divIcon({
+                           className: 'user-location-icon',
+                           html: `<div class="w-6 h-6 bg-emerald-500 border-2 border-white rounded-full shadow-lg animate-pulse"></div>`,
+                           iconSize: [24, 24],
+                           iconAnchor: [12, 12],
+                         })}
+                       >
+                         <Popup>Your Location</Popup>
+                       </Marker>
+
+                       {localNodes.map(node => (
+                         <MapMarker 
+                           key={node.id} 
+                           node={node} 
+                           location={location} 
+                           onSelect={setSelectedNode} 
+                         />
+                       ))}
+                     </MapContainer>
+                   )}
+                 </div>
+               )}
             </div>
             
             {sectorInitialized && (
