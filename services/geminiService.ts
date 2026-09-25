@@ -3,7 +3,7 @@ import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { EnvironmentIssue, ActionPlan, LocationData, GroundingLink, DetectedObject } from "../types";
 
 // Always create a new client instance for each request to ensure it uses the latest configuration
-const getAIClient = () => new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const getAIClient = () => new GoogleGenAI({ apiKey: import.meta.env.GEMINI_API_KEY });
 
 /**
  * Helper to remove asterisks from AI generated text (usually markdown formatting)
